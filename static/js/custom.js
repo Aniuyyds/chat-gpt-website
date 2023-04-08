@@ -83,7 +83,7 @@ $(document).ready(function() {
     
     // 保存api key与对话数据
     var data = {
-      "apiKey" : "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",
+      "apiKey" : "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",
     }
    
     // 判断是否使用自己的api key
