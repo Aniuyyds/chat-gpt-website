@@ -56,12 +56,17 @@ $(document).ready(function() {
     return div.innerHTML;
   }
 
-  // 添加消息到窗口,对message进行转义，防止html被浏览器渲染
+  // 添加消息到窗口
   function addMessage(message,imgName) {
     $(".answer .tips").css({"display":"none"});    // 打赏卡隐藏
     chatInput.val('');
-    var escapedMessage = escapeHtml(message);
-    var messageElement = $('<div class="row message-bubble"><img class="chat-icon" src="./static/images/' + imgName + '"><p class="message-text">' +  escapedMessage + '</p></div>');
+    var escapedMessage;
+    if (imgName == "avatar.png"){
+      escapedMessage= escapeHtml(message);  // 对请求message进行转义，防止输入的是html被浏览器渲染
+    }else if(imgName == "chatgpt.png"){
+      escapedMessage= marked(message);  // 使用marked.js对响应message的markdown格式转换为html
+    }
+    var messageElement = $('<div class="row message-bubble"><img class="chat-icon" src="./static/images/' + imgName + '"><div class="message-text">' +  escapedMessage + '</div></div>');
     chatWindow.append(messageElement);
     chatWindow.animate({ scrollTop: chatWindow.prop('scrollHeight') }, 500);
   }
@@ -110,6 +115,8 @@ $(document).ready(function() {
         chatInput.on("keydown",handleEnter);
       })
       return
+    }else{
+      message = message
     }
 
 
@@ -122,8 +129,6 @@ $(document).ready(function() {
     chatBtn.attr('disabled',true)
 
     data.prompt = messages
-
-    console.log(data);
 
     // 发送信息到后台
     $.ajax({
