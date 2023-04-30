@@ -1,9 +1,17 @@
+*{
+  margin: 0;
+  padding: 0;
+}
+
 @media screen and (max-width: 768px){
   body{
     width: 100% !important;
   }
   .foot p:first-child{
     font-size: 14px !important;
+  }
+  .foot p a{
+    font-size: 13px !important;
   }
 }
 
@@ -84,7 +92,7 @@
   overflow-y: auto;
 }
 
-.answer #chatWindow .message-bubble {
+.message-bubble {
   padding: 10px;
   margin: 5px;
   display: flex;
@@ -92,17 +100,43 @@
   border-bottom: 1px dashed #e7eaec;
 }
 
-
-.answer #chatWindow .message-bubble .message-text{
+.message-bubble .message-text{
   font-size: 18px;
   margin-left:15px;
-  white-space: normal;
+  word-break: break-all;
 }
 
-.answer .chat-icon {
+.message-bubble .message-text p{
+  white-space: pre-wrap;
+}
+
+.message-bubble .response ol,ul{
+  padding-left: 2em;
+}
+
+/* 错误信息样式 */
+.message-bubble .message-text p.error{
+  color:red;
+  height:auto;
+  display: block;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.message-bubble .chat-icon {
   width: 30px;
   height: 30px;
   border-radius: 3px;
+}
+
+.message-bubble .response .loading-icon{
+  display: block;
+  width:35px;
+  height:35px;
+  background-image: url(../images/loading.gif);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 .answer #chatBtn{
@@ -116,4 +150,11 @@
 
 .foot p:nth-child(2){
   margin-bottom: 0;
+}
+
+.foot p a{
+  font-weight: 400;
+  font-size: 14px;
+  color:red;
+  text-decoration:none;
 }
