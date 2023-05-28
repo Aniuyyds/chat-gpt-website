@@ -10,13 +10,25 @@ $(document).ready(function() {
   // 检查返回的信息是否是正确信息
   var resFlag = true
 
-  // marked.js设置语法高亮
+  // 创建自定义渲染器
+  const renderer = new marked.Renderer();
+
+  // 重写list方法
+  renderer.list = function(body, ordered, start) {
+    const type = ordered ? 'ol' : 'ul';
+    const startAttr = (ordered && start) ? ` start="${start}"` : '';
+    return `<${type}${startAttr}>\n${body}</${type}>\n`;
+  };
+
+  // 设置marked选项
   marked.setOptions({
+    renderer: renderer,
     highlight: function (code, language) {
-        const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
-        return hljs.highlight(code, { language: validLanguage }).value;
-    },
+      const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
+      return hljs.highlight(code, { language: validLanguage }).value;
+    }
   });
+
 
   // 转义html代码(对应字符转移为html实体)，防止在浏览器渲染
   function escapeHtml(html) {
@@ -31,9 +43,9 @@ $(document).ready(function() {
     $(".answer .tips").css({"display":"none"});    // 打赏卡隐藏
     chatInput.val('');
     let escapedMessage = escapeHtml(message);  // 对请求message进行转义，防止输入的是html而被浏览器渲染
-    let requestMessageElement = $('<div class="row message-bubble"><img class="chat-icon" src="./static/images/avatar.png"><div class="message-text request">' +  escapedMessage + '</div></div>');
+    let requestMessageElement = $('<div class="message-bubble"><span class="chat-icon request-icon"></span><div class="message-text request"><p>' +  escapedMessage + '</p></div></div>');
     chatWindow.append(requestMessageElement);
-    let responseMessageElement = $('<div class="row message-bubble"><img class="chat-icon" src="./static/images/chatgpt.png"><div class="message-text response"><span class="loading-icon"><i class="fa fa-spinner fa-pulse fa-2x"></i></span></div></div>');
+    let responseMessageElement = $('<div class="message-bubble"><span class="chat-icon response-icon"></span><div class="message-text response"><span class="loading-icon"><i class="fa fa-spinner fa-pulse fa-2x"></i></span></div></div>');
     chatWindow.append(responseMessageElement);
     chatWindow.scrollTop(chatWindow.prop('scrollHeight'));
   }
@@ -189,8 +201,9 @@ $(document).ready(function() {
           localStorage.setItem("session",JSON.stringify(messages));
         }
       }
+      // 添加复制
+      copy();
     });
-
   });  
 
   // Enter键盘事件
@@ -245,7 +258,7 @@ $(document).ready(function() {
   // apiKey
   const apiKey = localStorage.getItem('apiKey');
   if (apiKey) {
-     $(".settings-common .api-key").val(apiKey);
+    $(".settings-common .api-key").val(apiKey);
   }
 
   // apiKey输入框事件
@@ -275,15 +288,15 @@ $(document).ready(function() {
 
   $('#chck-1').click(function() {
     if ($(this).prop('checked')) {
-        // 开启状态的操作
-        localStorage.setItem('archiveSession', true);
-        if(messages.length != 0){
-          localStorage.setItem("session",JSON.stringify(messages));
-        }
+      // 开启状态的操作
+      localStorage.setItem('archiveSession', true);
+      if(messages.length != 0){
+        localStorage.setItem("session",JSON.stringify(messages));
+      }
     } else {
-        // 关闭状态的操作
-        localStorage.setItem('archiveSession', false);
-        localStorage.removeItem("session");
+      // 关闭状态的操作
+      localStorage.setItem('archiveSession', false);
+      localStorage.removeItem("session");
     }
   });
   
@@ -299,6 +312,8 @@ $(document).ready(function() {
           addResponseMessage(item.content)
         }
       });
+      // 添加复制
+      copy();
     }
   }
 
@@ -319,9 +334,9 @@ $(document).ready(function() {
 
   $('#chck-2').click(function() {
     if ($(this).prop('checked')) {
-        localStorage.setItem('continuousDialogue', true);
+      localStorage.setItem('continuousDialogue', true);
     } else {
-        localStorage.setItem('continuousDialogue', false);
+      localStorage.setItem('continuousDialogue', false);
     }
   });
 
@@ -341,6 +356,7 @@ $(document).ready(function() {
       position: "absolute",
       left: "-9999px",
       overflow: "visible",
+      width: chatWindow.width(),
       height: "auto"
     });
     $("body").append(clonedChatWindow);
@@ -363,15 +379,59 @@ $(document).ready(function() {
     });
   });
 
-  // // 禁用右键菜单
-  // document.addEventListener('contextmenu',function(e){
-  //   e.preventDefault();  // 阻止默认事件
-  // });
+  // 复制代码功能
+  function copy(){
+    $('pre').each(function() {
+      let btn = $('<button class="copy-btn">复制</button>');
+      $(this).append(btn);
+      btn.hide();
+    });
 
-  // // 禁止键盘F12键
-  // document.addEventListener('keydown',function(e){
-  //   if(e.key == 'F12'){
-  //       e.preventDefault(); // 如果按下键F12,阻止事件
-  //   }
-  // });
+    $('pre').hover(
+      function() {
+        $(this).find('.copy-btn').show();
+      },
+      function() {
+        $(this).find('.copy-btn').hide();
+      }
+    );
+  
+    $('pre').on('click', '.copy-btn', function() {
+      let text = $(this).siblings('code').text();
+      // 创建一个临时的 textarea 元素
+      let textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+
+      // 选择 textarea 中的文本
+      textArea.select();
+
+      // 执行复制命令
+      try {
+        document.execCommand('copy');
+        $(this).text('复制成功');
+      } catch (e) {
+        $(this).text('复制失败');
+      }
+
+      // 从文档中删除临时的 textarea 元素
+      document.body.removeChild(textArea);
+
+      setTimeout(() => {
+        $(this).text('复制');
+      }, 2000);
+    });
+  }
+
+  // 禁用右键菜单
+  document.addEventListener('contextmenu',function(e){
+    e.preventDefault();  // 阻止默认事件
+  });
+
+  // 禁止键盘F12键
+  document.addEventListener('keydown',function(e){
+    if(e.key == 'F12'){
+        e.preventDefault(); // 如果按下键F12,阻止事件
+    }
+  });
 });
